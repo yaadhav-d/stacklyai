@@ -212,31 +212,27 @@ df1["ma"] = df1["total"].rolling(3).mean()
 # ------------------------------
 # ADVANCED CHART
 # ------------------------------
-fig1 = px.line(
-    df1,
-    x="period",
-    y="total",
-    markers=True,
-    title="User Growth Trend"
-)
+# ------------------------------
+# BAR + TREND CHART
+# ------------------------------
+fig1 = go.Figure()
 
-# Moving average line
-fig1.add_scatter(
+# User bars
+fig1.add_trace(go.Bar(
+    x=df1["period"],
+    y=df1["total"],
+    name="Users",
+    opacity=0.75
+))
+
+# Moving average trend
+fig1.add_trace(go.Scatter(
     x=df1["period"],
     y=df1["ma"],
-    mode="lines",
-    name="Moving Avg",
-    line=dict(dash="dash")
-)
-
-# Hover improvements
-fig1.update_traces(
-    hovertemplate=
-    "<b>Period:</b> %{x}<br>" +
-    "<b>Users:</b> %{y}<br>" +
-    "<b>Growth:</b> %{customdata:.2f}%<extra></extra>",
-    customdata=df1["growth_pct"]
-)
+    mode="lines+markers",
+    name="Trend",
+    line=dict(width=3)
+))
 
 fig1.update_layout(
     template="plotly_dark",
