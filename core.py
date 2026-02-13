@@ -764,10 +764,7 @@ ORDER BY rating
 """, conn)
 
 # --------------------------
-# PIE / DONUT CHART
-# --------------------------
-# --------------------------
-# SIDEBAR BAR CHART
+# SIDEBAR BAR CHART (Green → Red)
 # --------------------------
 fig6 = px.bar(
     df6,
@@ -776,7 +773,7 @@ fig6 = px.bar(
     orientation="h",
     title="User Rating Distribution",
     color="rating",
-    color_discrete_sequence=px.colors.qualitative.Bold,
+    color_continuous_scale="RdYlGn",  # Green → Yellow → Red
     text="total"
 )
 
@@ -785,7 +782,8 @@ fig6.update_layout(
     margin=dict(l=20, r=20, t=50, b=20),
     xaxis_title="Number of Ratings",
     yaxis_title="Rating",
-    showlegend=False
+    showlegend=False,
+    coloraxis_showscale=False
 )
 
 fig6.update_traces(textposition="outside")
