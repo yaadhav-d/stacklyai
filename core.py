@@ -650,16 +650,6 @@ with col_filter:
 
     grp5 = get_group(view5, "a.usage_date")
 
-    loc_df = pd.read_sql(
-        "SELECT DISTINCT location FROM users WHERE location IS NOT NULL",
-        conn
-    )
-
-    selected_location = st.selectbox(
-        "Location",
-        ["All"] + loc_df["location"].tolist(),
-        key="api_location"
-    )
 
     selected_type = st.selectbox(
         "User Type",
@@ -672,9 +662,6 @@ with col_filter:
 # -----------------------
 conditions = []
 
-if selected_location != "All":
-    conditions.append(f"u.location = '{selected_location}'")
-
 if selected_type != "All":
     conditions.append(f"u.user_type = '{selected_type}'")
 
@@ -685,20 +672,18 @@ if conditions:
 # -----------------------
 # QUERY
 # -----------------------
-query = f"""
-SELECT
-    {grp5} AS period,
-    COALESCE(u.user_type,'Unknown') AS user_type,
-    SUM(a.calls_made) AS total
+query = """
+SELECT SUM(a.calls_made) AS total_calls
 FROM api_usage a
 LEFT JOIN users u
     ON u.user_id = a.user_id
-{where_clause}
-GROUP BY period, user_type
-ORDER BY period
 """
 
+if conditions:
+    query += " WHERE " + " AND ".join(conditions)
+
 df5 = pd.read_sql(query, conn)
+
 
 # Remove milliseconds completely
 df5["period"] = pd.to_datetime(df5["period"]).dt.date
@@ -706,33 +691,29 @@ df5["period"] = pd.to_datetime(df5["period"]).dt.date
 # -----------------------
 # CHART PANEL
 # -----------------------
-with col_chart:
+total_calls = df5["total_calls"].iloc[0] or 0
 
-    if df5.empty:
-        st.warning("No API usage data found.")
-    else:
-        heat_df = df5.pivot_table(
-            index="user_type",
-            columns="period",
-            values="total",
-            fill_value=0
-        )
+fig5 = go.Figure(go.Indicator(
+    mode="gauge+number",
+    value=total_calls,
+    title={'text': "API Calls Usage"},
+    gauge={
+        'axis': {'range': [None, total_calls * 1.5 if total_calls else 100]},
+        'bar': {'color': "#22c55e"},
+        'steps': [
+            {'range': [0, total_calls * 0.5], 'color': "#1f2937"},
+            {'range': [total_calls * 0.5, total_calls], 'color': "#334155"},
+        ],
+    }
+))
 
-        fig5 = px.imshow(
-            heat_df,
-            aspect="auto",
-            color_continuous_scale="Turbo",
-            title="API Usage Heatmap"
-        )
+fig5.update_layout(
+    template="plotly_dark",
+    margin=dict(l=20, r=20, t=50, b=20)
+)
 
-        fig5.update_layout(
-            template="plotly_dark",
-            xaxis_title="Period",
-            yaxis_title="User Type",
-            margin=dict(l=20, r=20, t=50, b=20)
-        )
+st.plotly_chart(fig5, use_container_width=True)
 
-        st.plotly_chart(fig5, use_container_width=True)
 
 # ===============================
 # RATINGS
