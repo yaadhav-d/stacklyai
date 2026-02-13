@@ -285,16 +285,14 @@ END
 # -----------------------
 df2 = pd.read_sql(f"""
 SELECT
-    {grp2} as period,
     {age_case} as age_group,
     COUNT(*) as total
 FROM users
 WHERE status='active'
-{location_filter}
-{type_filter}
-GROUP BY period, age_group
-ORDER BY period
+GROUP BY age_group
+ORDER BY age_group
 """, conn)
+
 
 # -----------------------
 # ADVANCED AREA CHART
@@ -304,7 +302,7 @@ ORDER BY period
 # -----------------------
 
 # Aggregate totals by age group
-donut_df = df2.groupby("age_group", as_index=False)["total"].sum()
+donut_df = df2
 
 fig2 = px.pie(
     donut_df,
