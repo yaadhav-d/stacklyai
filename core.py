@@ -445,11 +445,12 @@ fig3.add_trace(go.Scatter(
     x=df3["period"],
     y=df3["total"],
     mode="lines",
-    line=dict(width=3),
+    line=dict(width=3, color="#FF2D2D"),  # bright red line
     fill="tozeroy",
-    fillcolor="rgba(59,130,246,0.25)",
+    fillcolor="rgba(255,45,45,0.25)",     # red glow fill
     name="Revenue"
 ))
+
 
 fig3.update_layout(
     template="plotly_dark",
