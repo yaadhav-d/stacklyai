@@ -254,29 +254,19 @@ st.markdown("<div class='section-title'>Active User Analytics</div>", unsafe_all
 # -----------------------
 # VIEW SELECTOR
 # -----------------------
-view2 = st.selectbox(
-    "Active View",
-    ["Monthly", "Daily"],
-    key="u2"
-)
 
-grp2 = get_group(view2, "signup_date")
+grp2 = get_group("Monthly", "signup_date")
+location_filter = ""
+type_filter = ""
 
 # -----------------------
 # LOCATION FILTER
 # -----------------------
-loc_df = pd.read_sql("SELECT DISTINCT location FROM users", conn)
-location_list = ["All"] + loc_df["location"].dropna().tolist()
 
-selected_location = st.selectbox("Location Filter", location_list)
 
 # -----------------------
 # USER TYPE FILTER
 # -----------------------
-type_df = pd.read_sql("SELECT DISTINCT user_type FROM users", conn)
-type_list = ["All"] + type_df["user_type"].dropna().tolist()
-
-selected_type = st.selectbox("User Type Filter", type_list)
 
 # -----------------------
 # AGE GROUP LOGIC
