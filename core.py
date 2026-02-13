@@ -644,7 +644,7 @@ with col_filter:
 
     view5 = st.selectbox(
         "Usage View",
-        ["Monthly", "Daily"],
+        ["Monthly","Weekly", "Daily"],
         key="api_view"
     )
 
