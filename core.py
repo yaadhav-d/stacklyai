@@ -9,11 +9,11 @@ import plotly.express as px
 st.set_page_config(page_title="SaaS Executive Dashboard", layout="wide")
 
 # ===============================
-# LIGHT SaaS CSS
+# WHITE THEME CSS
 # ===============================
 st.markdown("""
 <style>
-body { background:#f5f7fb; }
+body { background:#f6f8fc; }
 
 .card {
     background:white;
@@ -34,7 +34,9 @@ body { background:#f5f7fb; }
     font-weight:700;
 }
 
-hr {margin:10px 0 20px 0;}
+.stPlotlyChart {
+    background:white !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -117,16 +119,40 @@ c1, c2 = st.columns(2)
 with c1:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<div class="card-title">Revenue Trend</div>', unsafe_allow_html=True)
-    fig = px.line(df_rev, x="period", y="total")
-    fig.update_layout(template="simple_white", height=260)
+
+    fig = px.line(
+        df_rev,
+        x="period",
+        y="total",
+        color_discrete_sequence=["#2563eb"]
+    )
+
+    fig.update_layout(
+        height=260,
+        plot_bgcolor="white",
+        paper_bgcolor="white"
+    )
+
     st.plotly_chart(fig, use_container_width=True, key="rev")
     st.markdown('</div>', unsafe_allow_html=True)
 
 with c2:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<div class="card-title">Weekly Sales</div>', unsafe_allow_html=True)
-    fig2 = px.bar(weekly_sales, x="day", y="total")
-    fig2.update_layout(template="simple_white", height=260)
+
+    fig2 = px.bar(
+        weekly_sales,
+        x="day",
+        y="total",
+        color_discrete_sequence=["#10b981"]
+    )
+
+    fig2.update_layout(
+        height=260,
+        plot_bgcolor="white",
+        paper_bgcolor="white"
+    )
+
     st.plotly_chart(fig2, use_container_width=True, key="weekly")
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -151,16 +177,30 @@ c3, c4 = st.columns(2)
 with c3:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<div class="card-title">User Growth</div>', unsafe_allow_html=True)
-    fig3 = px.line(df_users, x="period", y="total")
-    fig3.update_layout(template="simple_white", height=260)
+
+    fig3 = px.line(
+        df_users,
+        x="period",
+        y="total",
+        color_discrete_sequence=["#6366f1"]
+    )
+
+    fig3.update_layout(height=260, plot_bgcolor="white", paper_bgcolor="white")
     st.plotly_chart(fig3, use_container_width=True, key="users")
     st.markdown('</div>', unsafe_allow_html=True)
 
 with c4:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<div class="card-title">API Usage</div>', unsafe_allow_html=True)
-    fig4 = px.bar(df_api, x="period", y="total")
-    fig4.update_layout(template="simple_white", height=260)
+
+    fig4 = px.bar(
+        df_api,
+        x="period",
+        y="total",
+        color_discrete_sequence=["#f59e0b"]
+    )
+
+    fig4.update_layout(height=260, plot_bgcolor="white", paper_bgcolor="white")
     st.plotly_chart(fig4, use_container_width=True, key="api")
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -184,48 +224,21 @@ c5, c6 = st.columns(2)
 with c5:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<div class="card-title">Subscriptions</div>', unsafe_allow_html=True)
-    fig5 = px.bar(df_sub, x="period", y="total")
-    fig5.update_layout(template="simple_white", height=260)
+
+    fig5 = px.bar(df_sub, x="period", y="total",
+                  color_discrete_sequence=["#ec4899"])
+    fig5.update_layout(height=260, plot_bgcolor="white", paper_bgcolor="white")
     st.plotly_chart(fig5, use_container_width=True, key="subs")
     st.markdown('</div>', unsafe_allow_html=True)
 
 with c6:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<div class="card-title">Ratings Distribution</div>', unsafe_allow_html=True)
-    fig6 = px.pie(df_rating, names="rating", values="total", hole=0.6)
-    fig6.update_layout(template="simple_white", height=260)
+
+    fig6 = px.pie(df_rating, names="rating", values="total",
+                  color_discrete_sequence=px.colors.qualitative.Set2)
+    fig6.update_layout(height=260, paper_bgcolor="white")
     st.plotly_chart(fig6, use_container_width=True, key="rating")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ===============================
-# TASK OVERVIEW + ACTIVITIES
-# ===============================
-task_status = pd.read_sql("""
-SELECT status, COUNT(*) total
-FROM users GROUP BY status
-""", conn)
-
-activities = pd.read_sql("""
-SELECT activity_type, activity_time
-FROM activity_logs
-ORDER BY activity_time DESC
-LIMIT 5
-""", conn)
-
-c7, c8 = st.columns(2)
-
-with c7:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown('<div class="card-title">Task Overview</div>', unsafe_allow_html=True)
-    fig7 = px.pie(task_status, names="status", values="total", hole=0.6)
-    fig7.update_layout(template="simple_white", height=260)
-    st.plotly_chart(fig7, use_container_width=True, key="tasks")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with c8:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown('<div class="card-title">Recent Activities</div>', unsafe_allow_html=True)
-    st.dataframe(activities, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 conn.close()
