@@ -255,9 +255,6 @@ st.markdown("<div class='section-title'>Active User Analytics</div>", unsafe_all
 # VIEW SELECTOR
 # -----------------------
 
-grp2 = get_group("Monthly", "signup_date")
-location_filter = ""
-type_filter = ""
 
 # -----------------------
 # LOCATION FILTER
