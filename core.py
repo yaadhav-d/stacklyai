@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 # ===============================
 # PAGE CONFIG
 # ===============================
-st.set_page_config(page_title="Executive Intelligence Dashboard", layout="wide")
+st.set_page_config(page_title="Dashboard Overview", layout="wide")
 
 # ===============================
 # CSS (YOUR STYLE PRESERVED)
