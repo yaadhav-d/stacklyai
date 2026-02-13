@@ -240,7 +240,8 @@ fig1.update_layout(
     xaxis_title="Period",
     yaxis_title="Users",
     margin=dict(l=20, r=20, t=50, b=20),
-    xaxis=dict(rangeslider=dict(visible=True))
+    xaxis=dict(rangeslider=dict(visible=False))
+
 )
 
 st.plotly_chart(fig1, use_container_width=True)
