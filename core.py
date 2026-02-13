@@ -672,9 +672,11 @@ if conditions:
 # -----------------------
 # QUERY
 # -----------------------
+# -----------------------
+# QUERY
+# -----------------------
 query = f"""
 SELECT
-    {grp5} AS period,
     SUM(a.calls_made) AS total_calls
 FROM api_usage a
 LEFT JOIN users u
@@ -684,20 +686,15 @@ LEFT JOIN users u
 if conditions:
     query += " WHERE " + " AND ".join(conditions)
 
-query += """
-GROUP BY period
-ORDER BY period DESC
-LIMIT 1
-"""
-
 df5 = pd.read_sql(query, conn)
 
-# SAFE VALUE
-if df5.empty:
+# -----------------------
+# SAFE VALUE EXTRACTION
+# -----------------------
+if df5.empty or df5["total_calls"].isna().all():
     total_calls = 0
 else:
-    total_calls = df5["total_calls"].iloc[0] or 0
-
+    total_calls = int(df5["total_calls"].iloc[0])
 
 # -----------------------
 # CHART PANEL
