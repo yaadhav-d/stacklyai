@@ -417,32 +417,11 @@ grp3 = get_group(view3, "p.payment_date")
 
 # -----------------------
 # LOCATION FILTER
-# -----------------------
-loc_df = pd.read_sql(
-    "SELECT DISTINCT location FROM users",
-    conn
-)
-
-location_list = ["All"] + loc_df["location"].dropna().tolist()
-
-selected_location = st.selectbox("Location", location_list)
-
-# -----------------------
-# USER TYPE FILTER
-# -----------------------
-user_types = ["All", "Company", "Student", "Skill Development"]
-selected_type = st.selectbox("User Type", user_types)
+# --------------------
 
 # -----------------------
 # FILTER CONDITIONS
 # -----------------------
-filters = ""
-
-if selected_location != "All":
-    filters += f" AND u.location = '{selected_location}'"
-
-if selected_type != "All":
-    filters += f" AND u.user_type = '{selected_type}'"
 
 # -----------------------
 # QUERY
@@ -452,12 +431,10 @@ SELECT
     {grp3} as period,
     SUM(p.amount) as total
 FROM payments p
-JOIN users u ON u.user_id = p.user_id
-WHERE 1=1
-{filters}
 GROUP BY period
 ORDER BY period
 """, conn)
+
 
 # -----------------------
 # REVENUE CHART
@@ -468,8 +445,9 @@ fig3.add_trace(go.Scatter(
     x=df3["period"],
     y=df3["total"],
     mode="lines",
-    fill="tozeroy",
     line=dict(width=3),
+    fill="tozeroy",
+    fillcolor="rgba(59,130,246,0.25)",
     name="Revenue"
 ))
 
@@ -477,11 +455,13 @@ fig3.update_layout(
     template="plotly_dark",
     hovermode="x unified",
     margin=dict(l=20, r=20, t=50, b=20),
-    xaxis=dict(rangeslider=dict(visible=True)),
-    yaxis_title="Revenue"
+    xaxis_title="Period",
+    yaxis_title="Revenue",
+    showlegend=False
 )
 
 st.plotly_chart(fig3, use_container_width=True)
+
 
 # ===============================
 # SUBSCRIPTIONS
