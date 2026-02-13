@@ -9,30 +9,34 @@ import plotly.express as px
 st.set_page_config(page_title="Executive Dashboard", layout="wide")
 
 # ===============================
-# CSS
+# CSS STYLE
 # ===============================
 st.markdown("""
 <style>
-body { background:#0b1220; }
+body { background:#eef2f7; }
 
-.dashboard-card {
-    background: linear-gradient(160deg,#111827,#020617);
+.card {
+    background:white;
     padding:20px;
-    border-radius:18px;
-    box-shadow:0 12px 30px rgba(0,0,0,0.7);
+    border-radius:16px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.08);
     margin-bottom:20px;
 }
 
-.dashboard-title {
-    font-size:14px;
-    color:#9ca3af;
-    margin-bottom:6px;
+.card-title {
+    font-size:16px;
+    font-weight:600;
+    margin-bottom:10px;
 }
 
-.dashboard-value {
-    font-size:24px;
+.metric-value {
+    font-size:28px;
     font-weight:700;
-    margin-bottom:8px;
+}
+
+.small-note {
+    color:green;
+    font-size:14px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -51,127 +55,102 @@ def get_connection():
 
 conn = get_connection()
 
-def scalar(query):
-    return pd.read_sql(query, conn).iloc[0][0]
+def scalar(q):
+    return pd.read_sql(q, conn).iloc[0][0]
 
 # ===============================
-# HEADER
-# ===============================
-st.title("Executive Sales Intelligence")
-
-# ===============================
-# GLOBAL FILTER
-# ===============================
-view_mode = st.selectbox(
-    "View Mode",
-    ["Monthly", "Daily"],
-    key="global_view_mode"
-)
-
-def group(view, col):
-    if view == "Monthly":
-        return f"DATE_FORMAT({col}, '%Y-%m')"
-    return f"DATE({col})"
-
-# ===============================
-# KPI DATA
+# DATA LOAD
 # ===============================
 total_users = scalar("SELECT COUNT(*) FROM users")
-active_users = scalar("SELECT COUNT(*) FROM users WHERE status='active'")
-revenue_total = scalar("SELECT IFNULL(SUM(amount),0) FROM payments")
-active_subs = scalar("SELECT COUNT(*) FROM subscriptions WHERE status='active'")
-avg_rating = scalar("SELECT IFNULL(AVG(rating),0) FROM feedback")
 
-# ===============================
-# REVENUE DATA
-# ===============================
-grp = group(view_mode, "payment_date")
+users_growth = pd.read_sql("""
+SELECT DATE_FORMAT(signup_date,'%Y-%m') period,
+COUNT(*) total
+FROM users
+GROUP BY period ORDER BY period
+""", conn)
 
-df_rev = pd.read_sql(f"""
-SELECT {grp} period,
-       SUM(amount) total
+weekly_sales = pd.read_sql("""
+SELECT DAYNAME(payment_date) day,
+SUM(amount) total
 FROM payments
-GROUP BY period
-ORDER BY period
+GROUP BY day
+""", conn)
+
+task_status = pd.read_sql("""
+SELECT status, COUNT(*) total
+FROM users
+GROUP BY status
+""", conn)
+
+activities = pd.read_sql("""
+SELECT activity_type, activity_time
+FROM activity_logs
+ORDER BY activity_time DESC
+LIMIT 5
 """, conn)
 
 # ===============================
-# ROW 1 — REVENUE + SALES
+# ROW 1
 # ===============================
-col1, col2 = st.columns([2,1])
+col1, col2 = st.columns(2)
 
+# ---------- Key Metrics ----------
 with col1:
-    st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-    st.markdown('<div class="dashboard-title">Revenue</div>', unsafe_allow_html=True)
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown('<div class="card-title">Key Metrics</div>', unsafe_allow_html=True)
 
-    fig_rev = px.line(df_rev, x="period", y="total")
-    fig_rev.update_traces(line=dict(width=4))
-    fig_rev.update_layout(template="plotly_dark", height=260)
+    st.markdown(f'<div class="metric-value">{total_users:,}</div>',
+                unsafe_allow_html=True)
+    st.markdown('<div class="small-note">▲ Growth Active Users</div>',
+                unsafe_allow_html=True)
 
-    st.plotly_chart(fig_rev, use_container_width=True, key="rev_chart")
+    fig1 = px.line(users_growth, x="period", y="total")
+    fig1.update_layout(template="simple_white", height=200)
+
+    st.plotly_chart(fig1, use_container_width=True, key="growth_chart")
     st.markdown('</div>', unsafe_allow_html=True)
 
+# ---------- Weekly Sales ----------
 with col2:
-    st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-    st.markdown('<div class="dashboard-title">Total Sales</div>', unsafe_allow_html=True)
-    st.markdown(
-        f'<div class="dashboard-value">₹ {revenue_total:,.0f}</div>',
-        unsafe_allow_html=True
-    )
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown('<div class="card-title">Weekly Sales</div>', unsafe_allow_html=True)
 
-    fig_sales = px.bar(df_rev.tail(7), x="period", y="total")
-    fig_sales.update_layout(template="plotly_dark", height=260)
+    fig2 = px.bar(weekly_sales, x="day", y="total")
+    fig2.update_layout(template="simple_white", height=260)
 
-    st.plotly_chart(fig_sales, use_container_width=True, key="sales_chart")
+    st.plotly_chart(fig2, use_container_width=True, key="weekly_sales")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ===============================
-# DONUT CHART FUNCTION
+# ROW 2
 # ===============================
-def donut(title, percent, key):
-    st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-    st.markdown(
-        f'<div class="dashboard-title">{title}</div>',
-        unsafe_allow_html=True
+col3, col4 = st.columns(2)
+
+# ---------- Task Overview ----------
+with col3:
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown('<div class="card-title">Task Overview</div>', unsafe_allow_html=True)
+
+    fig3 = px.pie(
+        task_status,
+        names="status",
+        values="total",
+        hole=0.6
     )
 
-    fig = px.pie(
-        values=[percent, 100-percent],
-        names=["Value",""],
-        hole=0.75
-    )
+    fig3.update_layout(template="simple_white", height=260)
 
-    fig.update_layout(
-        template="plotly_dark",
-        height=250,
-        showlegend=False,
-        annotations=[dict(text=f"{percent}%", showarrow=False, font_size=20)]
-    )
-
-    fig.update_traces(textinfo="none")
-
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    st.plotly_chart(fig3, use_container_width=True, key="task_overview")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# ===============================
-# ROW 2 — KPI DONUTS
-# ===============================
-c3, c4, c5 = st.columns(3)
+# ---------- Recent Activities ----------
+with col4:
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown('<div class="card-title">Recent Activities</div>', unsafe_allow_html=True)
 
-success_rate = round((active_users/total_users)*100,1) if total_users else 0
-return_rate = round((active_subs/total_users)*100,1) if total_users else 0
-rating_score = round((avg_rating/5)*100,1)
+    st.dataframe(activities, use_container_width=True)
 
-with c3:
-    donut("Successful Users", success_rate, "donut_success")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-with c4:
-    donut("Returning Users", return_rate, "donut_return")
-
-with c5:
-    donut("Rating Score", rating_score, "donut_rating")
-
-# ===============================
-# CLOSE CONNECTION
-# ===============================
 conn.close()
