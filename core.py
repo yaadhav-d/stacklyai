@@ -2,18 +2,14 @@ import streamlit as st
 import pandas as pd
 import mysql.connector
 import plotly.express as px
-import plotly.graph_objects as go
 
 # ===============================
 # PAGE CONFIG
 # ===============================
-st.set_page_config(
-    page_title="Executive Dashboard",
-    layout="wide"
-)
+st.set_page_config(page_title="Executive Dashboard", layout="wide")
 
 # ===============================
-# CSS – CARD STYLE
+# CSS
 # ===============================
 st.markdown("""
 <style>
@@ -66,7 +62,11 @@ st.title("Executive Sales Intelligence")
 # ===============================
 # GLOBAL FILTER
 # ===============================
-view_mode = st.selectbox("View Mode", ["Monthly","Daily"])
+view_mode = st.selectbox(
+    "View Mode",
+    ["Monthly", "Daily"],
+    key="global_view_mode"
+)
 
 def group(view, col):
     if view == "Monthly":
@@ -96,47 +96,47 @@ ORDER BY period
 """, conn)
 
 # ===============================
-# ROW 1
+# ROW 1 — REVENUE + SALES
 # ===============================
 col1, col2 = st.columns([2,1])
 
-# Revenue trend
 with col1:
     st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
     st.markdown('<div class="dashboard-title">Revenue</div>', unsafe_allow_html=True)
 
-    fig = px.line(df_rev, x="period", y="total")
-    fig.update_traces(line=dict(width=4))
-    fig.update_layout(template="plotly_dark", height=260)
+    fig_rev = px.line(df_rev, x="period", y="total")
+    fig_rev.update_traces(line=dict(width=4))
+    fig_rev.update_layout(template="plotly_dark", height=260)
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig_rev, use_container_width=True, key="rev_chart")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Mini bars
 with col2:
     st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
     st.markdown('<div class="dashboard-title">Total Sales</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="dashboard-value">₹ {revenue_total:,.0f}</div>',
-                unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="dashboard-value">₹ {revenue_total:,.0f}</div>',
+        unsafe_allow_html=True
+    )
 
-    fig2 = px.bar(df_rev.tail(7), x="period", y="total")
-    fig2.update_layout(template="plotly_dark", height=260)
+    fig_sales = px.bar(df_rev.tail(7), x="period", y="total")
+    fig_sales.update_layout(template="plotly_dark", height=260)
 
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig_sales, use_container_width=True, key="sales_chart")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ===============================
-# ROW 2 – DONUT METRICS
+# DONUT CHART FUNCTION
 # ===============================
-c3, c4, c5 = st.columns(3)
-
-def donut(title, percent):
+def donut(title, percent, key):
     st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-    st.markdown(f'<div class="dashboard-title">{title}</div>',
-                unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="dashboard-title">{title}</div>',
+        unsafe_allow_html=True
+    )
 
     fig = px.pie(
-        values=[percent,100-percent],
+        values=[percent, 100-percent],
         names=["Value",""],
         hole=0.75
     )
@@ -144,25 +144,34 @@ def donut(title, percent):
     fig.update_layout(
         template="plotly_dark",
         height=250,
-        showlegend=False
+        showlegend=False,
+        annotations=[dict(text=f"{percent}%", showarrow=False, font_size=20)]
     )
 
     fig.update_traces(textinfo="none")
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key=key)
     st.markdown('</div>', unsafe_allow_html=True)
+
+# ===============================
+# ROW 2 — KPI DONUTS
+# ===============================
+c3, c4, c5 = st.columns(3)
 
 success_rate = round((active_users/total_users)*100,1) if total_users else 0
 return_rate = round((active_subs/total_users)*100,1) if total_users else 0
 rating_score = round((avg_rating/5)*100,1)
 
 with c3:
-    donut("Successful Users", success_rate)
+    donut("Successful Users", success_rate, "donut_success")
 
 with c4:
-    donut("Returning Users", return_rate)
+    donut("Returning Users", return_rate, "donut_return")
 
 with c5:
-    donut("Rating Score", rating_score)
+    donut("Rating Score", rating_score, "donut_rating")
 
+# ===============================
+# CLOSE CONNECTION
+# ===============================
 conn.close()
