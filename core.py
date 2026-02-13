@@ -278,13 +278,7 @@ CASE
 END
 """
 
-location_filter = ""
-if selected_location != "All":
-    location_filter += f" AND location = '{selected_location}'"
 
-type_filter = ""
-if selected_type != "All":
-    type_filter += f" AND user_type = '{selected_type}'"
 
 # -----------------------
 # QUERY
