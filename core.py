@@ -672,8 +672,10 @@ if conditions:
 # -----------------------
 # QUERY
 # -----------------------
-query = """
-SELECT SUM(a.calls_made) AS total_calls
+query = f"""
+SELECT
+    {grp5} AS period,
+    SUM(a.calls_made) AS total_calls
 FROM api_usage a
 LEFT JOIN users u
     ON u.user_id = a.user_id
@@ -682,8 +684,11 @@ LEFT JOIN users u
 if conditions:
     query += " WHERE " + " AND ".join(conditions)
 
-df5 = pd.read_sql(query, conn)
-
+query += """
+GROUP BY period
+ORDER BY period DESC
+LIMIT 1
+"""
 
 # -----------------------
 # CHART PANEL
