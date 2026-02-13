@@ -847,32 +847,116 @@ st.plotly_chart(fig6, use_container_width=True)
 # ===============================
 st.markdown("<div class='section-title'>Global Combined</div>", unsafe_allow_html=True)
 
-gview = st.selectbox("Global View", ["Monthly","Weekly","Daily"])
+# --------------------------
+# VIEW FILTER
+# --------------------------
+gview = st.selectbox(
+    "View Type",
+    ["Monthly", "Daily"],
+    key="global_view"
+)
 
-g1 = get_group(gview,"payment_date")
-g2 = get_group(gview,"signup_date")
+# --------------------------
+# AXIS OPTIONS
+# --------------------------
+axis_options = {
+    "Revenue": {
+        "table": "payments",
+        "date_col": "payment_date",
+        "value": "SUM(amount)",
+        "label": "Revenue"
+    },
+    "Users": {
+        "table": "users",
+        "date_col": "signup_date",
+        "value": "COUNT(*)",
+        "label": "Users"
+    },
+    "API Calls": {
+        "table": "api_usage",
+        "date_col": "usage_date",
+        "value": "SUM(calls_made)",
+        "label": "API Calls"
+    },
+    "Subscriptions": {
+        "table": "subscriptions",
+        "date_col": "start_date",
+        "value": "COUNT(*)",
+        "label": "Subscriptions"
+    }
+}
 
-pay = pd.read_sql(f"""
-SELECT {g1} as period, SUM(amount) as revenue
-FROM payments GROUP BY period ORDER BY period
+# --------------------------
+# AXIS SELECTORS
+# --------------------------
+x_metric = st.selectbox("X Metric", list(axis_options.keys()), key="x_axis")
+y_metric = st.selectbox("Y Metric", list(axis_options.keys()), key="y_axis")
+
+x_conf = axis_options[x_metric]
+y_conf = axis_options[y_metric]
+
+gx = get_group(gview, x_conf["date_col"])
+gy = get_group(gview, y_conf["date_col"])
+
+# --------------------------
+# DATA QUERIES
+# --------------------------
+df_x = pd.read_sql(f"""
+SELECT {gx} as period,
+       {x_conf['value']} as value
+FROM {x_conf['table']}
+GROUP BY period
+ORDER BY period
 """, conn)
 
-usr = pd.read_sql(f"""
-SELECT {g2} as period, COUNT(*) as users
-FROM users GROUP BY period ORDER BY period
+df_y = pd.read_sql(f"""
+SELECT {gy} as period,
+       {y_conf['value']} as value
+FROM {y_conf['table']}
+GROUP BY period
+ORDER BY period
 """, conn)
 
-global_df = pd.merge(pay, usr, on="period", how="outer").fillna(0)
+# --------------------------
+# MERGE DATA
+# --------------------------
+global_df = pd.merge(df_x, df_y, on="period", how="outer")
+global_df.columns = ["period", "x_value", "y_value"]
+global_df = global_df.fillna(0)
 
+global_df["period"] = pd.to_datetime(global_df["period"])
+
+# --------------------------
+# CHART
+# --------------------------
 figg = go.Figure()
-figg.add_trace(go.Scatter(x=global_df["period"], y=global_df["revenue"], name="Revenue"))
-figg.add_trace(go.Scatter(x=global_df["period"], y=global_df["users"], name="Users", yaxis="y2"))
+
+figg.add_trace(go.Scatter(
+    x=global_df["period"],
+    y=global_df["x_value"],
+    name=x_metric,
+    mode="lines"
+))
+
+figg.add_trace(go.Scatter(
+    x=global_df["period"],
+    y=global_df["y_value"],
+    name=y_metric,
+    yaxis="y2",
+    mode="lines"
+))
 
 figg.update_layout(
     template="plotly_dark",
-    yaxis2=dict(overlaying="y", side="right")
+    hovermode="x unified",
+    yaxis2=dict(
+        overlaying="y",
+        side="right"
+    ),
+    margin=dict(l=20, r=20, t=40, b=20)
 )
 
 st.plotly_chart(figg, use_container_width=True)
+
 
 conn.close()
