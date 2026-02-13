@@ -685,9 +685,6 @@ if conditions:
 df5 = pd.read_sql(query, conn)
 
 
-# Remove milliseconds completely
-df5["period"] = pd.to_datetime(df5["period"]).dt.date
-
 # -----------------------
 # CHART PANEL
 # -----------------------
