@@ -642,13 +642,8 @@ col_filter, col_chart = st.columns([1, 3])
 # -----------------------
 with col_filter:
 
-    view5 = st.selectbox(
-        "Usage View",
-        ["Monthly","Weekly", "Daily"],
-        key="api_view"
-    )
 
-    grp5 = get_group(view5, "a.usage_date")
+
 
 
     selected_type = st.selectbox(
