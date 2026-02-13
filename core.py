@@ -690,6 +690,15 @@ ORDER BY period DESC
 LIMIT 1
 """
 
+df5 = pd.read_sql(query, conn)
+
+# SAFE VALUE
+if df5.empty:
+    total_calls = 0
+else:
+    total_calls = df5["total_calls"].iloc[0] or 0
+
+
 # -----------------------
 # CHART PANEL
 # -----------------------
