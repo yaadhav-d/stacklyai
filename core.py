@@ -318,19 +318,30 @@ ORDER BY period
 # -----------------------
 # ADVANCED AREA CHART
 # -----------------------
-fig2 = px.area(
-    df2,
-    x="period",
-    y="total",
-    color="age_group",
-    title="Active Users by Age Group"
+# -----------------------
+# DONUT CHART
+# -----------------------
+
+# Aggregate totals by age group
+donut_df = df2.groupby("age_group", as_index=False)["total"].sum()
+
+fig2 = px.pie(
+    donut_df,
+    names="age_group",
+    values="total",
+    title="Active Users by Age Group",
+    hole=0.55,
+    color_discrete_sequence=px.colors.qualitative.Bold
 )
 
 fig2.update_layout(
     template="plotly_dark",
-    hovermode="x unified",
-    margin=dict(l=20, r=20, t=50, b=20),
-    xaxis=dict(rangeslider=dict(visible=True))
+    margin=dict(l=20, r=20, t=50, b=20)
+)
+
+fig2.update_traces(
+    textinfo="percent+label",
+    pull=[0.03] * len(donut_df)
 )
 
 st.plotly_chart(fig2, use_container_width=True)
