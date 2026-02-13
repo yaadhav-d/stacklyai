@@ -71,7 +71,7 @@ conn = get_connection()
 # ===============================
 # HEADER
 # ===============================
-st.markdown("<h1>🚀 Executive Intelligence Dashboard</h1>", unsafe_allow_html=True)
+st.markdown("<h1>Dashboard Overview</h1>", unsafe_allow_html=True)
 st.markdown("<hr>", unsafe_allow_html=True)
 
 # ===============================
