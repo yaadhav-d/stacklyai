@@ -766,24 +766,29 @@ ORDER BY rating
 # --------------------------
 # PIE / DONUT CHART
 # --------------------------
-fig6 = px.pie(
+# --------------------------
+# SIDEBAR BAR CHART
+# --------------------------
+fig6 = px.bar(
     df6,
-    names="rating",
-    values="total",
+    x="total",
+    y="rating",
+    orientation="h",
     title="User Rating Distribution",
-    hole=0.45,  # donut effect
-    color_discrete_sequence=px.colors.qualitative.Bold
+    color="rating",
+    color_discrete_sequence=px.colors.qualitative.Bold,
+    text="total"
 )
 
 fig6.update_layout(
     template="plotly_dark",
-    margin=dict(l=20, r=20, t=50, b=20)
+    margin=dict(l=20, r=20, t=50, b=20),
+    xaxis_title="Number of Ratings",
+    yaxis_title="Rating",
+    showlegend=False
 )
 
-fig6.update_traces(
-    textinfo="percent+label",
-    pull=[0.03]*len(df6)  # slight separation
-)
+fig6.update_traces(textposition="outside")
 
 st.plotly_chart(fig6, use_container_width=True)
 
