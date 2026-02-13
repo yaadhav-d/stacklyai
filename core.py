@@ -9,12 +9,17 @@ import plotly.express as px
 st.set_page_config(page_title="SaaS Executive Dashboard", layout="wide")
 
 # ===============================
-# WHITE THEME CSS
+# WHITE PAGE CSS
 # ===============================
 st.markdown("""
 <style>
-body { background:#f6f8fc; }
 
+/* Entire app background */
+.stApp {
+    background-color: white;
+}
+
+/* Cards */
 .card {
     background:white;
     padding:20px;
@@ -32,10 +37,6 @@ body { background:#f6f8fc; }
 .metric-value {
     font-size:26px;
     font-weight:700;
-}
-
-.stPlotlyChart {
-    background:white !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -100,7 +101,7 @@ for col,(title,val) in zip(cols, metrics):
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ===============================
-# REVENUE + WEEKLY SALES
+# REVENUE
 # ===============================
 grp_pay = group(view_mode, "payment_date")
 
@@ -109,136 +110,30 @@ SELECT {grp_pay} period, SUM(amount) total
 FROM payments GROUP BY period ORDER BY period
 """, conn)
 
-weekly_sales = pd.read_sql("""
-SELECT DAYNAME(payment_date) day, SUM(amount) total
-FROM payments GROUP BY day
-""", conn)
+st.markdown('<div class="card">', unsafe_allow_html=True)
+st.markdown('<div class="card-title">Revenue Trend</div>', unsafe_allow_html=True)
 
-c1, c2 = st.columns(2)
+fig = px.line(df_rev, x="period", y="total")
+st.plotly_chart(fig, use_container_width=True)
 
-with c1:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown('<div class="card-title">Revenue Trend</div>', unsafe_allow_html=True)
-
-    fig = px.line(
-        df_rev,
-        x="period",
-        y="total",
-        color_discrete_sequence=["#2563eb"]
-    )
-
-    fig.update_layout(
-        height=260,
-        plot_bgcolor="white",
-        paper_bgcolor="white"
-    )
-
-    st.plotly_chart(fig, use_container_width=True, key="rev")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with c2:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown('<div class="card-title">Weekly Sales</div>', unsafe_allow_html=True)
-
-    fig2 = px.bar(
-        weekly_sales,
-        x="day",
-        y="total",
-        color_discrete_sequence=["#10b981"]
-    )
-
-    fig2.update_layout(
-        height=260,
-        plot_bgcolor="white",
-        paper_bgcolor="white"
-    )
-
-    st.plotly_chart(fig2, use_container_width=True, key="weekly")
-    st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
 # ===============================
-# USER GROWTH + API USAGE
+# USER GROWTH
 # ===============================
 grp_users = group(view_mode, "signup_date")
-grp_api = group(view_mode, "usage_date")
 
 df_users = pd.read_sql(f"""
 SELECT {grp_users} period, COUNT(*) total
 FROM users GROUP BY period ORDER BY period
 """, conn)
 
-df_api = pd.read_sql(f"""
-SELECT {grp_api} period, SUM(calls_made) total
-FROM api_usage GROUP BY period ORDER BY period
-""", conn)
+st.markdown('<div class="card">', unsafe_allow_html=True)
+st.markdown('<div class="card-title">User Growth</div>', unsafe_allow_html=True)
 
-c3, c4 = st.columns(2)
+fig2 = px.line(df_users, x="period", y="total")
+st.plotly_chart(fig2, use_container_width=True)
 
-with c3:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown('<div class="card-title">User Growth</div>', unsafe_allow_html=True)
-
-    fig3 = px.line(
-        df_users,
-        x="period",
-        y="total",
-        color_discrete_sequence=["#6366f1"]
-    )
-
-    fig3.update_layout(height=260, plot_bgcolor="white", paper_bgcolor="white")
-    st.plotly_chart(fig3, use_container_width=True, key="users")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with c4:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown('<div class="card-title">API Usage</div>', unsafe_allow_html=True)
-
-    fig4 = px.bar(
-        df_api,
-        x="period",
-        y="total",
-        color_discrete_sequence=["#f59e0b"]
-    )
-
-    fig4.update_layout(height=260, plot_bgcolor="white", paper_bgcolor="white")
-    st.plotly_chart(fig4, use_container_width=True, key="api")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ===============================
-# SUBSCRIPTIONS + RATINGS
-# ===============================
-grp_sub = group(view_mode, "start_date")
-
-df_sub = pd.read_sql(f"""
-SELECT {grp_sub} period, COUNT(*) total
-FROM subscriptions GROUP BY period ORDER BY period
-""", conn)
-
-df_rating = pd.read_sql("""
-SELECT rating, COUNT(*) total
-FROM feedback GROUP BY rating ORDER BY rating
-""", conn)
-
-c5, c6 = st.columns(2)
-
-with c5:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown('<div class="card-title">Subscriptions</div>', unsafe_allow_html=True)
-
-    fig5 = px.bar(df_sub, x="period", y="total",
-                  color_discrete_sequence=["#ec4899"])
-    fig5.update_layout(height=260, plot_bgcolor="white", paper_bgcolor="white")
-    st.plotly_chart(fig5, use_container_width=True, key="subs")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with c6:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown('<div class="card-title">Ratings Distribution</div>', unsafe_allow_html=True)
-
-    fig6 = px.pie(df_rating, names="rating", values="total",
-                  color_discrete_sequence=px.colors.qualitative.Set2)
-    fig6.update_layout(height=260, paper_bgcolor="white")
-    st.plotly_chart(fig6, use_container_width=True, key="rating")
-    st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
 conn.close()
